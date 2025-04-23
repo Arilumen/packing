@@ -1,0 +1,59 @@
+import streamlit as st
+import pandas as pd
+
+st.set_page_config(page_title="Packing List", layout="centered")
+st.title("Générateur de Packing List - Stufe")
+
+# Dati dei modelli
+models = {
+    "Milo 14kw PJ": {"dimensions": (103, 53, 135), "stackable": False},
+    "Leonardo 12kw PJ": {"dimensions": (74, 60, 125), "stackable": False},
+    "Leonardo 8kw PJ": {"dimensions": (74, 60, 125), "stackable": False},
+    "Leonardo 9kw": {"dimensions": (74, 60, 125), "stackable": False},
+    "Mattia 9kw": {"dimensions": (74, 60, 120), "stackable": "both"},
+    "Filippo 9kw": {"dimensions": (74, 60, 120), "stackable": "top_only"},
+    "Charly 9kw PJ acciaio": {"dimensions": (74, 60, 120), "stackable": False},
+    "Charly 9kw PJ vetro": {"dimensions": (74, 60, 120), "stackable": False},
+    "Zara 8kw": {"dimensions": (74, 60, 120), "stackable": True},
+    "Gianni 9kw": {"dimensions": (74, 60, 120), "stackable": True},
+    "Giulia 9kw": {"dimensions": (74, 60, 120), "stackable": True}
+}
+
+st.markdown("Saisissez les quantités pour chaque modèle de poêle :")
+
+quantities = {}
+cols = st.columns(3)
+for i, (model, data) in enumerate(models.items()):
+    with cols[i % 3]:
+        qty = st.number_input(f"{model}", 0, 100, step=1)
+        if qty > 0:
+            quantities[model] = qty
+
+if st.button("Générer la liste"):
+    if not quantities:
+        st.warning("Aucun modèle sélectionné.")
+    else:
+        data = []
+        for model, qty in quantities.items():
+            dims = models[model]["dimensions"]
+            stackable = models[model]["stackable"]
+            for _ in range(qty):
+                data.append({
+                    "model": model,
+                    "length": dims[0],
+                    "width": dims[1],
+                    "height": dims[2],
+                    "stackable": stackable
+                })
+
+        df = pd.DataFrame(data)
+        st.success("Packing list générée!")
+        st.dataframe(df)
+
+        csv = df.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="📥 Télécharger en CSV",
+            data=csv,
+            file_name="packing_list.csv",
+            mime="text/csv"
+        )
